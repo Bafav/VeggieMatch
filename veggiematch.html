@@ -2,6 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VeggieMatch - L'amour pousse ici !</title>
 <style>
   body {
@@ -22,24 +23,29 @@
   }
   .page {
     display: none;
+    width: 90%;
     max-width: 500px;
-    margin: auto;
+    margin: 20px auto;
     padding: 20px;
   }
   .active { display: block; }
   button {
-    padding: 10px 20px;
-    margin: 10px;
-    font-size: 1em;
+    width: 100%;
+    padding: 15px;
+    margin: 10px 0;
+    font-size: 1.1em;
     border: none;
-    border-radius: 5px;
+    border-radius: 8px;
     cursor: pointer;
-    background: #fff;
-    transition: background 0.3s;
+    color: #fff;
+    background: linear-gradient(90deg, #7dd96e, #56ab2f);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    transition: transform 0.2s;
   }
-  button:hover { background: #e0ffe0; }
+  button:hover { transform: scale(1.05); }
   .card {
     position: relative;
+    width: 100%;
     background: #fff;
     padding: 20px;
     border-radius: 10px;
@@ -72,6 +78,10 @@
   }
   .match-item span { font-size: 2em; margin-right: 10px; }
   .hidden { display: none; }
+  @media (max-width: 600px) {
+    h1 { font-size: 2em; }
+    .card { font-size: 1em; }
+  }
 </style>
 </head>
 <body>
