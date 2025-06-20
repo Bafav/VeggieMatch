@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>VeggieMatch - L'amour pousse ici !</title>
+<style>
+  body {
+    margin: 0;
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(135deg, #a8e063, #56ab2f);
+    color: #333;
+  }
+  h1 {
+    text-align: center;
+    padding: 20px;
+    font-size: 2.5em;
+    animation: pop 1s ease-in-out;
+  }
+  @keyframes pop {
+    from { transform: scale(0.5); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .page {
+    display: none;
+    max-width: 500px;
+    margin: auto;
+    padding: 20px;
+  }
+  .active { display: block; }
+  button {
+    padding: 10px 20px;
+    margin: 10px;
+    font-size: 1em;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    background: #fff;
+    transition: background 0.3s;
+  }
+  button:hover { background: #e0ffe0; }
+  .card {
+    position: relative;
+    background: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    text-align: center;
+    font-size: 1.2em;
+  }
+  .emoji {
+    font-size: 3em;
+  }
+  .match-count {
+    text-align: center;
+    font-weight: bold;
+    margin-top: 10px;
+  }
+  textarea { width: 100%; height: 60px; }
+  input, select, textarea {
+    width: 100%;
+    padding: 8px;
+    margin: 5px 0 15px 0;
+    box-sizing: border-box;
+  }
+  .match-item {
+    display: flex;
+    align-items: center;
+    margin: 10px 0;
+    background: #fff;
+    padding: 10px;
+    border-radius: 5px;
+  }
+  .match-item span { font-size: 2em; margin-right: 10px; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+  <h1 onclick="secret()">VeggieMatch - L'amour pousse ici !</h1>
+
+  <div id="home" class="page active">
+    <button onclick="showPage('create')">Créer mon profil légume</button>
+    <button onclick="startMatch()">Commencer les rencontres</button>
+  </div>
+
+  <div id="create" class="page">
+    <h2>Mon profil légume</h2>
+    <input id="name" placeholder="Nom du légume" />
+    <label>Type
+      <select id="type">
+        <option>Racine</option>
+        <option>Feuille</option>
+        <option>Fruit</option>
+        <option>Aromate</option>
+      </select>
+    </label>
+    <label>Émoji
+      <select id="emoji"></select>
+    </label>
+    <textarea id="desc" placeholder="Description courte"></textarea>
+    <input id="age" type="number" placeholder="Âge en jours" />
+    <label>Préférence culinaire
+      <select id="pref">
+        <option>cru</option>
+        <option>cuit</option>
+        <option>mixte</option>
+      </select>
+    </label>
+    <button onclick="saveProfile()">Enregistrer</button>
+    <button onclick="showPage('home')">Retour</button>
+  </div>
+
+  <div id="match" class="page">
+    <div id="card" class="card"></div>
+    <div style="text-align:center; margin-top:10px;">
+      <button onclick="dislike()">💔 Passe ton chemin</button>
+      <button onclick="like()">💚 J'aime</button>
+    </div>
+    <div class="match-count">Matchs: <span id="matchCount">0</span></div>
+    <button onclick="showMatches()">Voir mes matchs</button>
+    <button onclick="showPage('home')">Retour à l'accueil</button>
+  </div>
+
+  <div id="matches" class="page">
+    <h2>Mes conquêtes potagères</h2>
+    <div id="matchList"></div>
+    <button onclick="showPage('home')">Retour à l'accueil</button>
+  </div>
+
+<script>
+(function(){
+  const emojis = ['🥕','🥔','🥒','🌽','🍆','🍅','🥦','🥬','🥑','🧄','🧅','🫑','🌶️','🍠','🥜','🍄','🥥','🍋','🫒','🍏'];
+  const emojiSelect = document.getElementById('emoji');
+  emojis.forEach(e => {
+    const opt = document.createElement('option');
+    opt.textContent = e;
+    emojiSelect.appendChild(opt);
+  });
+
+  if(!localStorage.getItem('profiles')) {
+    const profiles = [
+      {name:'Radis Rebelle',type:'Racine',emoji:'🥕',desc:'aime les rencontres épicées',age:3,pref:'cru'},
+      {name:'Poireau Passionné',type:'Feuille',emoji:'🧅',desc:'cherche sa moitié pour une soupe d\'amour',age:12,pref:'cuit'},
+      {name:'Courgette Coquine',type:'Fruit',emoji:'🥒',desc:'prête à tout pour un bon ratatouille',age:5,pref:'mixte'},
+      {name:'Tomate Timide',type:'Fruit',emoji:'🍅',desc:'rougit facilement',age:4,pref:'cru'},
+      {name:'Brocoli Brillant',type:'Feuille',emoji:'🥦',desc:'tête bien verte',age:7,pref:'cuit'},
+      {name:'Pomme de Terre Party',type:'Racine',emoji:'🥔',desc:'toujours chaude en robe',age:9,pref:'mixte'},
+      {name:'Carotte Coquette',type:'Racine',emoji:'🥕',desc:'raffole des compliments',age:6,pref:'cru'},
+      {name:'Aubergine Arrogante',type:'Fruit',emoji:'🍆',desc:'veut être la star du moussaka show',age:8,pref:'cuit'},
+      {name:'Avocat Aventureux',type:'Fruit',emoji:'🥑',desc:'fan de guacamole extrême',age:2,pref:'cru'},
+      {name:'Chou Cool',type:'Feuille',emoji:'🥬',desc:'toujours détendu',age:10,pref:'cuit'},
+      {name:'Maïs Mystérieux',type:'Fruit',emoji:'🌽',desc:'a des grains à revendre',age:4,pref:'mixte'},
+      {name:'Oignon Oseur',type:'Aromate',emoji:'🧅',desc:'fait pleurer de rire',age:3,pref:'cuit'},
+      {name:'Ail Alerte',type:'Aromate',emoji:'🧄',desc:'repousse les mauvaises herbes',age:1,pref:'cuit'},
+      {name:'Piment Piquant',type:'Fruit',emoji:'🌶️',desc:'met le feu aux papilles',age:3,pref:'cru'},
+      {name:'Patate Douce Délurée',type:'Racine',emoji:'🍠',desc:'sucrée à souhait',age:5,pref:'cuit'},
+      {name:'Champignon Charmeur',type:'Fruit',emoji:'🍄',desc:'sort souvent de sa boîte',age:2,pref:'mixte'},
+      {name:'Olive Olé',type:'Fruit',emoji:'🫒',desc:'prête pour un apéro caliente',age:7,pref:'cru'},
+      {name:'Citron Cintré',type:'Fruit',emoji:'🍋',desc:'toujours pressé',age:4,pref:'cru'},
+      {name:'Noix de Coco Cool',type:'Fruit',emoji:'🥥',desc:'plage, soleil et toi',age:15,pref:'mixte'},
+      {name:'Pomme Pétillante',type:'Fruit',emoji:'🍏',desc:'croquante à souhait',age:6,pref:'cru'}
+    ];
+    localStorage.setItem('profiles', JSON.stringify(profiles));
+  }
+})();
+
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function saveProfile(){
+  const profile = {
+    name: document.getElementById('name').value,
+    type: document.getElementById('type').value,
+    emoji: document.getElementById('emoji').value,
+    desc: document.getElementById('desc').value,
+    age: parseInt(document.getElementById('age').value||0),
+    pref: document.getElementById('pref').value
+  };
+  if(!profile.name){alert('Donne un nom à ton légume!');return;}
+  let profiles = JSON.parse(localStorage.getItem('profiles'))||[];
+  profiles.push(profile);
+  localStorage.setItem('profiles', JSON.stringify(profiles));
+  localStorage.setItem('myProfile', JSON.stringify(profile));
+  alert('Profil enregistré!');
+  showPage('home');
+}
+
+let queue = [];
+let current;
+function startMatch(){
+  const profiles = JSON.parse(localStorage.getItem('profiles'))||[];
+  queue = profiles.slice();
+  shuffle(queue);
+  showPage('match');
+  nextCard();
+  updateMatchCount();
+}
+
+function nextCard(){
+  current = queue.pop();
+  const card = document.getElementById('card');
+  if(!current){
+    card.innerHTML = '<p>Plus de légumes à croquer pour le moment!</p>';
+    return;
+  }
+  card.innerHTML = `<div class="emoji">${current.emoji}</div>
+    <h3>${current.name}</h3>
+    <p>${current.type} - ${current.age} jours</p>
+    <p>${current.desc}</p>`;
+}
+
+function like(){
+  playSound();
+  addMatch(current);
+  nextCard();
+}
+function dislike(){
+  playSound();
+  nextCard();
+}
+
+function addMatch(profile){
+  let matches = JSON.parse(localStorage.getItem('matches'))||[];
+  const phrases = [
+    "On dirait que ça va faire une bonne soupe!",
+    "Un duo digne d'un potager étoilé!",
+    "Ça sent le gratin à plein nez!",
+    "Votre amour sera plus croquant que jamais!"
+  ];
+  const recettes = [
+    "Salade passionnelle",
+    "Ragoût romantique",
+    "Soupe câline",
+    "Poêlée sensuelle"
+  ];
+  const phrase = phrases[Math.floor(Math.random()*phrases.length)];
+  const recette = recettes[Math.floor(Math.random()*recettes.length)];
+  matches.push({name: profile.name, emoji: profile.emoji, phrase, recette});
+  localStorage.setItem('matches', JSON.stringify(matches));
+  updateMatchCount();
+  alert(`C'est un match avec ${profile.name}! ${phrase}`);
+}
+
+function updateMatchCount(){
+  const matches = JSON.parse(localStorage.getItem('matches'))||[];
+  document.getElementById('matchCount').textContent = matches.length;
+}
+
+function showMatches(){
+  showPage('matches');
+  const list = document.getElementById('matchList');
+  list.innerHTML = '';
+  const matches = JSON.parse(localStorage.getItem('matches'))||[];
+  matches.forEach(m => {
+    const div = document.createElement('div');
+    div.className = 'match-item';
+    div.innerHTML = `<span>${m.emoji}</span><div><strong>${m.name}</strong><br>${m.phrase}<br><em>${m.recette}</em></div>`;
+    list.appendChild(div);
+  });
+}
+
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+}
+
+function secret(){
+  alert('🥕 Tu as trouvé le secret du potager!');
+}
+
+const pop = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=');
+function playSound(){
+  pop.play();
+}
+</script>
+</body>
+</html>
